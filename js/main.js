@@ -11,14 +11,13 @@ canvas.style.background = "#ff8";
 class Circle {
   constructor(x, y, radius, color, text, speed) {
     this.radius = radius;
+    // IMPORTANTE: Aquí usamos el radio aleatorio para calcular los límites de nacimiento
     this.posX = Math.max(this.radius, Math.min(x, window_width - this.radius));
     this.posY = Math.max(this.radius, Math.min(y, window_height - this.radius));
     this.color = color;
     this.text = text;
     this.speed = speed;
 
-    // --- MEJORA: Dirección basada en un ángulo aleatorio (0 a 360 grados) ---
-    // Esto asegura que casi NUNCA sigan la misma trayectoria exacta
     let randomAngle = Math.random() * Math.PI * 2; 
     this.dx = Math.cos(randomAngle) * this.speed;
     this.dy = Math.sin(randomAngle) * this.speed;
@@ -29,7 +28,11 @@ class Circle {
     context.strokeStyle = this.color;
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.font = "bold 20px Arial";
+    
+    // Ajustamos el tamaño de la fuente según el radio para que siempre quepa el número
+    let fontSize = Math.floor(this.radius * 0.8);
+    context.font = `bold ${fontSize}px Arial`;
+    
     context.fillStyle = this.color;
     context.fillText(this.text, this.posX, this.posY);
     context.lineWidth = 3;
@@ -41,7 +44,7 @@ class Circle {
   update(context) {
     this.draw(context);
 
-    // Rebotes
+    // Rebotes considerando el radio individual de cada círculo
     if ((this.posX + this.radius) >= window_width || (this.posX - this.radius) <= 0) {
       this.dx = -this.dx;
     }
@@ -58,28 +61,40 @@ function randomInRange(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-// --- CONFIGURACIÓN DE VELOCIDAD RÁPIDA ---
-const VELOCIDAD_RAPIDA = 7; // Puedes subir este número para más locura
+// --- GENERACIÓN CON RADIOS VARIABLES ---
 
-let radius1 = 40;
-let miCirculo = new Circle(
-    randomInRange(radius1, window_width - radius1), 
-    randomInRange(radius1, window_height - radius1), 
-    radius1, "blue", "Tec1", VELOCIDAD_RAPIDA
-);
+const numeroAzar = Math.floor(Math.random() * 10) + 1;
+let arrayCirculos = [];
 
-let radius2 = 40;
-let miCirculo2 = new Circle(
-    randomInRange(radius2, window_width - radius2), 
-    randomInRange(radius2, window_height - radius2), 
-    radius2, "red", "Tec2", VELOCIDAD_RAPIDA
-);
+for (let i = 0; i < numeroAzar; i++) {
+  // 1. Generamos un radio aleatorio entre 20 y 50 para cada uno
+  let radioAleatorio = randomInRange(20, 50);
+  
+  // 2. Velocidad aleatoria
+  let velocidadIndividual = randomInRange(4, 10);
+  
+  // 3. Color aleatorio
+  let color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+
+  arrayCirculos.push(
+    new Circle(
+      randomInRange(radioAleatorio, window_width - radioAleatorio),
+      randomInRange(radioAleatorio, window_height - radioAleatorio),
+      radioAleatorio,
+      color,
+      (i + 1).toString(),
+      velocidadIndividual
+    )
+  );
+}
 
 let updateCircle = function () {
   requestAnimationFrame(updateCircle);
   ctx.clearRect(0, 0, window_width, window_height);
-  miCirculo.update(ctx);
-  miCirculo2.update(ctx);
+  
+  arrayCirculos.forEach(circulo => {
+    circulo.update(ctx);
+  });
 };
 
 updateCircle();
