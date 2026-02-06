@@ -1,19 +1,42 @@
 const canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
-const window_height = window.innerHeight / 2;
-const window_width = window.innerWidth / 2;
+// Referencias a los desplazadores (Sliders)
+const sliderCant = document.getElementById("slider");
+const sliderAncho = document.getElementById("sliderAncho");
+const sliderAlto = document.getElementById("sliderAlto");
 
-canvas.height = window_height;
-canvas.width = window_width;
+// Referencias a las etiquetas de texto
+const valorLabel = document.getElementById("valorSlider");
+const valorAncho = document.getElementById("valorAncho");
+const valorAlto = document.getElementById("valorAlto");
+
+// --- LÓGICA DE LÍMITES AL 75% ---
+// Calculamos el máximo permitido según la pantalla del usuario
+const maxW = Math.floor(window.innerWidth * 0.75);
+const maxH = Math.floor(window.innerHeight * 0.75);
+
+// Configuramos los límites máximos de los sliders dinámicamente
+sliderAncho.max = maxW;
+sliderAlto.max = maxH;
+
+// Configuración inicial del canvas
+canvas.width = Math.floor(maxW * 0.8); // Inicia un poco más pequeño que el límite
+canvas.height = Math.floor(maxH * 0.8);
 canvas.style.background = "#ff8";
+
+// Sincronizamos los sliders con el tamaño inicial
+sliderAncho.value = canvas.width;
+sliderAlto.value = canvas.height;
+valorAncho.innerText = canvas.width + "px";
+valorAlto.innerText = canvas.height + "px";
 
 class Circle {
   constructor(x, y, radius, color, text, speed) {
     this.radius = radius;
-    // IMPORTANTE: Aquí usamos el radio aleatorio para calcular los límites de nacimiento
-    this.posX = Math.max(this.radius, Math.min(x, window_width - this.radius));
-    this.posY = Math.max(this.radius, Math.min(y, window_height - this.radius));
+    // Usamos el ancho/alto actual del canvas para posicionar al nacer
+    this.posX = Math.max(this.radius, Math.min(x, canvas.width - this.radius));
+    this.posY = Math.max(this.radius, Math.min(y, canvas.height - this.radius));
     this.color = color;
     this.text = text;
     this.speed = speed;
@@ -28,11 +51,8 @@ class Circle {
     context.strokeStyle = this.color;
     context.textAlign = "center";
     context.textBaseline = "middle";
-    
-    // Ajustamos el tamaño de la fuente según el radio para que siempre quepa el número
-    let fontSize = Math.floor(this.radius * 0.8);
+    let fontSize = Math.floor(this.radius * 0.7);
     context.font = `bold ${fontSize}px Arial`;
-    
     context.fillStyle = this.color;
     context.fillText(this.text, this.posX, this.posY);
     context.lineWidth = 3;
@@ -44,11 +64,12 @@ class Circle {
   update(context) {
     this.draw(context);
 
-    // Rebotes considerando el radio individual de cada círculo
-    if ((this.posX + this.radius) >= window_width || (this.posX - this.radius) <= 0) {
+    // --- REBOTE DINÁMICO ---
+    // Usamos canvas.width y canvas.height directamente para que el rebote se adapte al slider
+    if ((this.posX + this.radius) >= canvas.width || (this.posX - this.radius) <= 0) {
       this.dx = -this.dx;
     }
-    if ((this.posY + this.radius) >= window_height || (this.posY - this.radius) <= 0) {
+    if ((this.posY + this.radius) >= canvas.height || (this.posY - this.radius) <= 0) {
       this.dy = -this.dy;
     }
 
@@ -61,40 +82,61 @@ function randomInRange(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-// --- GENERACIÓN CON RADIOS VARIABLES ---
-
-const numeroAzar = Math.floor(Math.random() * 10) + 1;
 let arrayCirculos = [];
 
-for (let i = 0; i < numeroAzar; i++) {
-  // 1. Generamos un radio aleatorio entre 20 y 50 para cada uno
-  let radioAleatorio = randomInRange(20, 50);
-  
-  // 2. Velocidad aleatoria
-  let velocidadIndividual = randomInRange(4, 10);
-  
-  // 3. Color aleatorio
-  let color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+function crearCirculos(cantidad) {
+  arrayCirculos = []; 
+  for (let i = 0; i < cantidad; i++) {
+    let radioAleatorio = randomInRange(15, 40); 
+    let velocidad = randomInRange(3, 8);
+    let color = `hsl(${Math.random() * 360}, 70%, 50%)`;
 
-  arrayCirculos.push(
-    new Circle(
-      randomInRange(radioAleatorio, window_width - radioAleatorio),
-      randomInRange(radioAleatorio, window_height - radioAleatorio),
-      radioAleatorio,
-      color,
-      (i + 1).toString(),
-      velocidadIndividual
-    )
-  );
+    arrayCirculos.push(
+      new Circle(
+        randomInRange(radioAleatorio, canvas.width - radioAleatorio),
+        randomInRange(radioAleatorio, canvas.height - radioAleatorio),
+        radioAleatorio,
+        color,
+        (i + 1).toString(),
+        velocidad
+      )
+    );
+  }
 }
 
-let updateCircle = function () {
-  requestAnimationFrame(updateCircle);
-  ctx.clearRect(0, 0, window_width, window_height);
-  
-  arrayCirculos.forEach(circulo => {
-    circulo.update(ctx);
+// --- EVENTOS DE LOS DESPLAZADORES ---
+
+sliderCant.addEventListener("input", (e) => {
+  const num = e.target.value;
+  valorLabel.innerText = num;
+  crearCirculos(num);
+});
+
+sliderAncho.addEventListener("input", (e) => {
+  canvas.width = e.target.value;
+  valorAncho.innerText = e.target.value + "px";
+  // Evitamos que los círculos se queden fuera si achicamos el canvas
+  arrayCirculos.forEach(c => {
+    if (c.posX + c.radius > canvas.width) c.posX = canvas.width - c.radius;
   });
+});
+
+sliderAlto.addEventListener("input", (e) => {
+  canvas.height = e.target.value;
+  valorAlto.innerText = e.target.value + "px";
+  // Evitamos que los círculos se queden fuera si achicamos el canvas
+  arrayCirculos.forEach(c => {
+    if (c.posY + c.radius > canvas.height) c.posY = canvas.height - c.radius;
+  });
+});
+
+// Inicialización
+crearCirculos(sliderCant.value);
+
+let updateAnimation = function () {
+  requestAnimationFrame(updateAnimation);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  arrayCirculos.forEach(circulo => circulo.update(ctx));
 };
 
-updateCircle();
+updateAnimation();

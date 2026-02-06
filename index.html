@@ -1,17 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <link rel="icon" href="img/favicon.png" type="image/png">
-   
+    <link rel="icon" href="img/favicon.png" type="image/png">
     <title>POO con Canvas</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .controles { margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; }
+        canvas { border: 2px solid #333; display: block; margin-top: 10px; }
+    </style>
 </head>
-
 <body>
+
+    <div class="controles">
+        <div>
+            <label for="slider">Cantidad de círculos: </label>
+            <input type="range" id="slider" min="1" max="12" value="5">
+            <span id="valorSlider">5</span>
+        </div>
+
+        <div>
+            <label for="sliderAncho">Ancho (75% máx): </label>
+            <input type="range" id="sliderAncho" min="100">
+            <span id="valorAncho"></span>
+        </div>
+
+        <div>
+            <label for="sliderAlto">Alto (75% máx): </label>
+            <input type="range" id="sliderAlto" min="100">
+            <span id="valorAlto"></span>
+        </div>
+    </div>
+
     <canvas id="canvas"></canvas>
+
     <script src="js/main.js"></script>
 </body>
-
 </html>
